@@ -1,0 +1,28 @@
+# Core LangChain & Agent packages
+langchain
+langchain-core
+langchain-openai
+langchain-community
+langchain-text-splitters
+langchainhub
+tavily-python
+
+# Vector store
+faiss-cpu
+
+# UI and Environment
+gradio
+python-dotenv
+langsmith
+
+dotenv
+pandas
+matplotlib
+seaborn
+numpy
+typing_extensions
+
+# requirements.txt
+fastapi
+uvicorn[standard]
+pydantic

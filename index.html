@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediBot Assistant</title>
+    <style>
+        /* Basic styling for a clean, modern look */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        #chat-container {
+            width: 100%;
+            max-width: 600px;
+            height: 90vh;
+            max-height: 800px;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        #chat-header {
+            padding: 20px;
+            background-color: #007bff;
+            color: white;
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        #chat-messages {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .message {
+            padding: 12px 18px;
+            border-radius: 18px;
+            max-width: 75%;
+            line-height: 1.5;
+        }
+        .user-message {
+            background-color: #007bff;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        .bot-message {
+            background-color: #e9ecef;
+            color: #333;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+        .typing-indicator {
+            align-self: flex-start;
+            color: #888;
+            font-style: italic;
+        }
+        #chat-form {
+            display: flex;
+            padding: 20px;
+            border-top: 1px solid #eee;
+        }
+        #chat-input {
+            flex-grow: 1;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 10px 15px;
+            font-size: 1em;
+            outline: none;
+        }
+        #chat-input:focus {
+            border-color: #007bff;
+        }
+        #send-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 10px 20px;
+            margin-left: 10px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        #send-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+<div id="chat-container">
+    <div id="chat-header">🤖 MediBot Assistant</div>
+    <div id="chat-messages">
+        <!-- Chat messages will be dynamically inserted here -->
+        <div class="message bot-message">Hello! How can I help you today? Ask me about symptoms or diseases.</div>
+    </div>
+    <form id="chat-form">
+        <input type="text" id="chat-input" placeholder="Type your message..." autocomplete="off" required>
+        <button type="submit" id="send-button">Send</button>
+    </form>
+</div>
+
+<script>
+    // Get references to the HTML elements
+    const chatForm = document.getElementById('chat-form');
+    const chatInput = document.getElementById('chat-input');
+    const chatMessages = document.getElementById('chat-messages');
+
+    // This will hold the unique session ID for the conversation
+    let sessionId = null;
+
+    // Handle form submission
+    chatForm.addEventListener('submit', async (event) => {
+        event.preventDefault(); // Prevent the form from reloading the page
+
+        const userInput = chatInput.value.trim();
+        if (!userInput) return; // Don't send empty messages
+
+        // Display the user's message on the screen
+        addMessage(userInput, 'user-message');
+        chatInput.value = ''; // Clear the input field
+
+        // Show a "typing..." indicator for better UX
+        const typingIndicator = addMessage('MediBot is typing...', 'typing-indicator');
+
+        try {
+            // --- Build the request payload conditionally ---
+            const payload = {
+                user_input: userInput,
+            };
+            // Only add session_id to the payload if it already exists (is not null)
+            if (sessionId) {
+                payload.session_id = sessionId;
+            }
+
+            // --- Call the FastAPI Backend ---
+            const response = await fetch('http://127.0.0.1:8000/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            // The API returns a session_id. Store it for subsequent messages.
+            sessionId = data.session_id;
+
+            // Remove the typing indicator and display the bot's actual response
+            typingIndicator.remove();
+            addMessage(data.answer, 'bot-message');
+
+        } catch (error) {
+            console.error('Error fetching from API:', error);
+            typingIndicator.remove();
+            addMessage('Sorry, something went wrong. Please try again.', 'bot-message');
+        }
+    });
+
+    // Helper function to add a new message to the chat window
+    function addMessage(text, className) {
+        const messageElement = document.createElement('div');
+        messageElement.classList.add('message', className);
+        messageElement.textContent = text;
+        chatMessages.appendChild(messageElement);
+
+        // Scroll to the bottom to see the latest message
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+
+        return messageElement; // Return the element for potential modification (like removing it)
+    }
+</script>
+
+</body>
+</html>
