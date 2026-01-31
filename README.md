@@ -16,6 +16,9 @@ What this file contains
 - Severity scores cluster around 3–5 (moderate). Use severity metadata to add nuance (e.g., "moderate severity").
 
 2 — Architecture
+
+![System Architecture](architecture/architecture.png)
+
 - UI: Gradio (app.py) or optional FastAPI + static index.html.
 - Orchestration: LangChain + a ReAct-style agent (app.py) that chooses tools and uses conversation memory.
 - Tools: tools.py — functions (DiagnosisTool, rag_query) that query FAISS with metadata filters.
